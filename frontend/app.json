@@ -1,0 +1,71 @@
+{
+  "expo": {
+    "name": "Kinetic Voice",
+    "slug": "kinetic-voice",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "kinetic-voice",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kineticvoice.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Track your runs and walks accurately",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Continue tracking your activity in the background",
+        "NSMicrophoneUsageDescription": "Control your workout with voice commands",
+        "UIBackgroundModes": ["location", "audio"]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#0A0A0A"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.kineticvoice.app",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "RECORD_AUDIO",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Track your runs and walks accurately",
+          "locationWhenInUsePermission": "Track your runs and walks accurately"
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Control your workout with voice commands"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#0A0A0A"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
