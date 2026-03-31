@@ -1,5 +1,5 @@
 // Optional Firebase service - only used if user provides config
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { storage } from '../utils/storage';
 import { Activity } from '../types';
 
 interface FirebaseConfig {
@@ -17,12 +17,12 @@ class FirebaseService {
     this.config = config;
     this.enabled = true;
     // Store config for future use
-    await AsyncStorage.setItem('firebase_config', JSON.stringify(config));
+    await storage.setItem('firebase_config', JSON.stringify(config));
   }
 
   async loadConfig(): Promise<void> {
     try {
-      const stored = await AsyncStorage.getItem('firebase_config');
+      const stored = await storage.getItem('firebase_config');
       if (stored) {
         this.config = JSON.parse(stored);
         this.enabled = true;

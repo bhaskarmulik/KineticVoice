@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { AppSettings, BackendMode } from '../types';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { storage } from '../utils/storage';
 import { voiceService } from '../services/voiceService';
 
 interface SettingsState extends AppSettings {
@@ -25,7 +25,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   updateSettings: async (settings: Partial<AppSettings>) => {
     const newSettings = { ...get(), ...settings };
     set(settings);
-    await AsyncStorage.setItem('app_settings', JSON.stringify(newSettings));
+    await storage.setItem('app_settings', JSON.stringify(newSettings));
     
     // Update voice service if Groq key changed
     if (settings.groqApiKey) {
@@ -35,7 +35,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   loadSettings: async () => {
     try {
-      const stored = await AsyncStorage.getItem('app_settings');
+      const stored = await storage.getItem('app_settings');
       if (stored) {
         const settings = JSON.parse(stored);
         set(settings);

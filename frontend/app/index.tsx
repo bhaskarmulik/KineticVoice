@@ -1,7 +1,7 @@
 import { Redirect } from 'expo-router';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useEffect, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { storage } from '../src/utils/storage';
 import { colors } from '../src/utils/theme';
 
 export default function Index() {
