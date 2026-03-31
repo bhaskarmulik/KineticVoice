@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { AppSettings, BackendMode } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { voiceService } from '../services/voiceService';
-import { firebaseService } from '../services/firebaseService';
 
 interface SettingsState extends AppSettings {
   updateSettings: (settings: Partial<AppSettings>) => Promise<void>;
@@ -46,8 +45,14 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
           voiceService.setGroqApiKey(settings.groqApiKey);
         }
         
+        // Initialize Firebase if configured
         if (settings.firebaseConfig) {
-          await firebaseService.initialize(settings.firebaseConfig);
+          try {
+            const { firebaseService } = await import('../services/firebaseService');
+            await firebaseService.initialize(settings.firebaseConfig);
+          } catch (error) {
+            console.log('Firebase service not available');
+          }
         }
       }
     } catch (error) {
@@ -67,7 +72,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setFirebaseConfig: async (config: any) => {
     await get().updateSettings({ firebaseConfig: config });
     if (config) {
-      await firebaseService.initialize(config);
+      try {
+        const { firebaseService } = await import('../services/firebaseService');
+        await firebaseService.initialize(config);
+      } catch (error) {
+        console.log('Firebase service not available');
+      }
     }
   },
 
