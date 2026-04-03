@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { colors, spacing, borderRadius, typography } from '../../src/utils/theme';
 import { ActivityCard } from '../../src/components/ActivityCard';
 import { useActivityStore } from '../../src/stores/activityStore';
-import { databaseService } from '../../src/services/databaseService';
+import { activityRepository } from '../../src/services/activityRepository';
 
 export default function HistoryScreen() {
   const router = useRouter();
@@ -18,7 +18,7 @@ export default function HistoryScreen() {
   }, []);
 
   const loadPastActivities = async () => {
-    const stored = await databaseService.getActivities();
+    const stored = await activityRepository.getActivities();
     loadActivities(stored);
   };
 
