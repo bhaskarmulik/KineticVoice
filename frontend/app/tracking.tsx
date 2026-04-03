@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Alert,
   Dimensions,
   Platform,
+  ToastAndroid,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +17,7 @@ import { colors, spacing, borderRadius, typography } from '../src/utils/theme';
 import { MetricCard } from '../src/components/MetricCard';
 import { VoiceConfirmationModal } from '../src/components/VoiceConfirmationModal';
 import { useActivityStore } from '../src/stores/activityStore';
+import { useSettingsStore } from '../src/stores/settingsStore';
 import { locationService } from '../src/services/locationService';
 import { voiceService } from '../src/services/voiceService';
 import { databaseService } from '../src/services/databaseService';
@@ -39,24 +41,50 @@ export default function TrackingScreen() {
     updateLocation,
     updateDuration,
   } = useActivityStore();
+  const voiceEnabled = useSettingsStore((state) => state.voiceEnabled);
 
   const [elapsedTime, setElapsedTime] = useState(0);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [voiceCommand, setVoiceCommand] = useState('');
   const [voiceAction, setVoiceAction] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+  const [pendingVoiceHandler, setPendingVoiceHandler] = useState<(() => void) | null>(null);
+  const hasInitializedTracking = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const mapRef = useRef<MapView>(null);
 
+  const startLocationTracking = useCallback(async () => {
+    await locationService.startTracking((location) => {
+      updateLocation(location);
+      
+      // Center map on current location
+      if (mapRef.current) {
+        mapRef.current.animateCamera({
+          center: {
+            latitude: location.latitude,
+            longitude: location.longitude,
+          },
+          zoom: 16,
+        });
+      }
+    });
+  }, [updateLocation]);
+
   useEffect(() => {
+    if (hasInitializedTracking.current) {
+      return;
+    }
+    hasInitializedTracking.current = true;
+
     // Start activity when screen loads
     if (!currentActivity) {
       startActivity(activityType);
       startLocationTracking();
     }
+  }, [activityType, currentActivity, startActivity, startLocationTracking]);
 
+  useEffect(() => {
     return () => {
-      // Cleanup
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
@@ -85,24 +113,7 @@ export default function TrackingScreen() {
         clearInterval(timerRef.current);
       }
     };
-  }, [isTracking]);
-
-  const startLocationTracking = async () => {
-    await locationService.startTracking((location) => {
-      updateLocation(location);
-      
-      // Center map on current location
-      if (mapRef.current) {
-        mapRef.current.animateCamera({
-          center: {
-            latitude: location.latitude,
-            longitude: location.longitude,
-          },
-          zoom: 16,
-        });
-      }
-    });
-  };
+  }, [isTracking, updateDuration]);
 
   const handlePause = () => {
     pauseActivity();
@@ -145,17 +156,91 @@ export default function TrackingScreen() {
   };
 
   const handleVoicePress = async () => {
+    const showVoiceFeedback = (message: string) => {
+      if (Platform.OS === 'android') {
+        ToastAndroid.show(message, ToastAndroid.SHORT);
+      } else {
+        Alert.alert('Voice Assistant', message);
+      }
+    };
+
+    if (!voiceEnabled) {
+      showVoiceFeedback('Voice commands are disabled in settings. You can continue using manual controls.');
+      return;
+    }
+
     if (isRecording) {
-      // Stop recording
-      setIsRecording(false);
-      const audioUri = await voiceService.stopRecording();
-      
-      if (audioUri) {
-        // Transcribe and parse command
-        // For now, show a demo modal
-        setVoiceCommand('Pause tracking');
-        setVoiceAction('Tracking paused...');
+      try {
+        setIsRecording(false);
+        const uri = await voiceService.stopRecording();
+        if (!uri) {
+          showVoiceFeedback('Could not read the recording. Please try again or use manual controls.');
+          return;
+        }
+
+        const text = await voiceService.transcribeAudio(uri);
+        if (!text) {
+          showVoiceFeedback('I could not transcribe that command. Please try again or use manual controls.');
+          return;
+        }
+
+        const context = `status=${currentActivity?.status ?? 'idle'}, duration=${formatDuration(elapsedTime)}, distance=${formatDistance(currentActivity?.distance || 0)}, activityType=${activityType}`;
+        const parsed = await voiceService.parseCommand(text, context);
+        if (!parsed || !parsed.intent || parsed.intent === 'UNKNOWN') {
+          showVoiceFeedback('I could not understand that command. Please try again or use manual controls.');
+          return;
+        }
+
+        const actionsByIntent: Record<string, { actionText: string; handler: () => void }> = {
+          START_ACTIVITY: {
+            actionText: `Start ${parsed.data?.activityType || activityType} tracking now?`,
+            handler: () => {
+              startActivity((parsed.data?.activityType as ActivityType) || activityType);
+              startLocationTracking();
+            },
+          },
+          PAUSE_ACTIVITY: {
+            actionText: 'Pause current tracking now?',
+            handler: handlePause,
+          },
+          RESUME_ACTIVITY: {
+            actionText: 'Resume current tracking now?',
+            handler: handleResume,
+          },
+          STOP_ACTIVITY: {
+            actionText: 'Stop and save this activity now?',
+            handler: handleStop,
+          },
+          QUERY_STATUS: {
+            actionText: 'Show current activity status?',
+            handler: () => {
+              Alert.alert(
+                'Current Status',
+                `Time: ${formatDuration(elapsedTime)}\nDistance: ${formatDistance(currentActivity?.distance || 0)}\nPace: ${formatPace(currentActivity?.avgPace)}`
+              );
+            },
+          },
+          MARK_SEGMENT: {
+            actionText: `Mark segment${parsed.data?.label ? `: ${parsed.data.label}` : ''}?`,
+            handler: () => {
+              showVoiceFeedback('Segment marked. Keep moving!');
+            },
+          },
+        };
+
+        const mappedAction = actionsByIntent[parsed.intent];
+        if (!mappedAction) {
+          showVoiceFeedback('That command is not supported yet. Manual controls are still available.');
+          return;
+        }
+
+        setVoiceCommand(text);
+        setVoiceAction(mappedAction.actionText);
+        setPendingVoiceHandler(() => mappedAction.handler);
         setShowVoiceModal(true);
+      } catch (error) {
+        console.error('Voice command flow failed:', error);
+        showVoiceFeedback('Voice command failed. Please try again or use manual controls.');
       }
     } else {
       // Start recording
@@ -163,18 +248,21 @@ export default function TrackingScreen() {
       if (hasPermission) {
         setIsRecording(true);
         await voiceService.startRecording();
+      } else {
+        showVoiceFeedback('Microphone permission is required for voice commands. You can still use manual controls.');
       }
     }
   };
 
   const handleVoiceConfirm = () => {
     setShowVoiceModal(false);
-    // Execute the parsed command
-    handlePause();
+    pendingVoiceHandler?.();
+    setPendingVoiceHandler(null);
   };
 
   const handleVoiceCancel = () => {
     setShowVoiceModal(false);
+    setPendingVoiceHandler(null);
   };
 
   const mapRegion = currentActivity && currentActivity.locations.length > 0
