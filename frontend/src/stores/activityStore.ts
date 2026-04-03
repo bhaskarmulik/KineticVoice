@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Activity, ActivityStatus, ActivityType, Location } from '../types';
+import { Activity, ActivityType, Location } from '../types';
 
 interface ActivityState {
   currentActivity: Activity | null;

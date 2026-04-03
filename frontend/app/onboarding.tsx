@@ -85,7 +85,7 @@ export default function OnboardingScreen() {
               <Text style={styles.title}>Welcome to</Text>
               <Text style={styles.titleHighlight}>Kinetic Voice</Text>
               <Text style={styles.subtitle}>
-                Choose how you'd like to store your fitness data
+                Choose how you{"'"}d like to store your fitness data
               </Text>
 
               <View style={styles.options}>

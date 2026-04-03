@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { colors, spacing, borderRadius, typography } from '../../src/utils/theme';
-import { Button } from '../../src/components/Button';
 import { MetricCard } from '../../src/components/MetricCard';
 import { ActivityCard } from '../../src/components/ActivityCard';
 import { useActivityStore } from '../../src/stores/activityStore';
@@ -24,20 +23,20 @@ export default function HomeScreen() {
   const { activities, loadActivities } = useActivityStore();
   const [locationPermission, setLocationPermission] = useState(false);
 
-  useEffect(() => {
-    loadPastActivities();
-    checkPermissions();
-  }, []);
-
-  const loadPastActivities = async () => {
+  const loadPastActivities = useCallback(async () => {
     const stored = await activityRepository.getActivities();
     loadActivities(stored);
-  };
+  }, [loadActivities]);
 
   const checkPermissions = async () => {
     const hasPermission = await locationService.checkPermissions();
     setLocationPermission(hasPermission);
   };
+
+  useEffect(() => {
+    loadPastActivities();
+    checkPermissions();
+  }, [loadPastActivities]);
 
   const handleStartActivity = (type: 'walk' | 'run') => {
     if (!locationPermission) {
@@ -98,7 +97,7 @@ export default function HomeScreen() {
           <Text style={styles.ctaTitle}>Ready to</Text>
           <Text style={styles.ctaTitleHighlight}>Move?</Text>
           <Text style={styles.ctaSubtitle}>
-            How are you feeling today? I'm ready to track your progress.
+            How are you feeling today? I{"'"}m ready to track your progress.
           </Text>
         </View>
 
@@ -147,7 +146,7 @@ export default function HomeScreen() {
         <View style={styles.suggestionContainer}>
           <Ionicons name="bulb" size={20} color={colors.primary} />
           <Text style={styles.suggestionText}>
-            Try saying: <Text style={styles.suggestionHighlight}>"Start a run"</Text>
+            Try saying: <Text style={styles.suggestionHighlight}>{'"'}Start a run{'"'}</Text>
           </Text>
         </View>
 
