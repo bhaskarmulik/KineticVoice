@@ -11,60 +11,48 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, spacing, borderRadius, typography } from '../../src/utils/theme';
 import { Button } from '../../src/components/Button';
 import { BackendMode } from '../../src/types';
+import { useSettingsStore } from '../../src/stores/settingsStore';
 
 export default function SettingsScreen() {
-  const [backendMode, setBackendMode] = useState<BackendMode>('local');
-  const [groqApiKey, setGroqApiKey] = useState('');
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [units, setUnits] = useState<'metric' | 'imperial'>('metric');
+  const {
+    backendMode,
+    groqApiKey: storedGroqApiKey,
+    voiceEnabled,
+    units,
+    loadSettings,
+    setGroqApiKey,
+    setBackendMode,
+    updateSettings,
+  } = useSettingsStore();
+
+  const [groqApiKey, setGroqApiKeyInput] = useState('');
 
   useEffect(() => {
     loadSettings();
-  }, []);
+  }, [loadSettings]);
 
-  const loadSettings = async () => {
-    try {
-      const stored = await AsyncStorage.getItem('app_settings');
-      if (stored) {
-        const settings = JSON.parse(stored);
-        setBackendMode(settings.backendMode || 'local');
-        setGroqApiKey(settings.groqApiKey || '');
-        setVoiceEnabled(settings.voiceEnabled !== false);
-        setUnits(settings.units || 'metric');
-      }
-    } catch (error) {
-      console.error('Failed to load settings:', error);
-    }
-  };
+  useEffect(() => {
+    setGroqApiKeyInput(storedGroqApiKey || '');
+  }, [storedGroqApiKey]);
 
-  const saveSettings = async (updates: any) => {
-    try {
-      const stored = await AsyncStorage.getItem('app_settings');
-      const current = stored ? JSON.parse(stored) : {};
-      const updated = { ...current, ...updates };
-      await AsyncStorage.setItem('app_settings', JSON.stringify(updated));
-    } catch (error) {
-      console.error('Failed to save settings:', error);
-    }
-  };
-
-  const handleSaveGroqKey = () => {
-    saveSettings({ groqApiKey });
+  const handleSaveGroqKey = async () => {
+    await setGroqApiKey(groqApiKey);
     Alert.alert('Success', 'Groq API key saved!');
   };
 
-  const handleToggleVoice = (value: boolean) => {
-    setVoiceEnabled(value);
-    saveSettings({ voiceEnabled: value });
+  const handleToggleVoice = async (value: boolean) => {
+    await updateSettings({ voiceEnabled: value });
   };
 
-  const handleChangeUnits = (value: 'metric' | 'imperial') => {
-    setUnits(value);
-    saveSettings({ units: value });
+  const handleChangeUnits = async (value: 'metric' | 'imperial') => {
+    await updateSettings({ units: value });
+  };
+
+  const handleChangeBackendMode = async (mode: BackendMode) => {
+    await setBackendMode(mode);
   };
 
   return (
@@ -99,6 +87,42 @@ export default function SettingsScreen() {
                 color={colors.primary}
               />
             </View>
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity
+              style={[styles.row, styles.radioRow]}
+              onPress={() => handleChangeBackendMode('local')}
+            >
+              <Text style={styles.rowTitle}>Local</Text>
+              <View style={styles.radioOuter}>
+                {backendMode === 'local' && <View style={styles.radioInner} />}
+              </View>
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity
+              style={[styles.row, styles.radioRow]}
+              onPress={() => handleChangeBackendMode('firebase')}
+            >
+              <Text style={styles.rowTitle}>Firebase</Text>
+              <View style={styles.radioOuter}>
+                {backendMode === 'firebase' && <View style={styles.radioInner} />}
+              </View>
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity
+              style={[styles.row, styles.radioRow]}
+              onPress={() => handleChangeBackendMode('emergent')}
+            >
+              <Text style={styles.rowTitle}>Emergent</Text>
+              <View style={styles.radioOuter}>
+                {backendMode === 'emergent' && <View style={styles.radioInner} />}
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -110,7 +134,7 @@ export default function SettingsScreen() {
             <TextInput
               style={styles.input}
               value={groqApiKey}
-              onChangeText={setGroqApiKey}
+              onChangeText={setGroqApiKeyInput}
               placeholder="sk-..."
               placeholderTextColor={colors.textTertiary}
               autoCapitalize="none"
@@ -259,8 +283,8 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     padding: spacing.md,
     color: colors.textPrimary,
-    fontSize: 16,
     marginBottom: spacing.md,
+    fontSize: 16,
   },
   saveButton: {
     marginBottom: spacing.md,
@@ -268,25 +292,26 @@ const styles = StyleSheet.create({
   hint: {
     ...typography.bodySmall,
     color: colors.textTertiary,
+    lineHeight: 20,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: spacing.sm,
   },
   radioOuter: {
     width: 24,
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: colors.textSecondary,
-    alignItems: 'center',
+    borderColor: colors.primary,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   radioInner: {
     width: 12,
     height: 12,
     borderRadius: 6,
     backgroundColor: colors.primary,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.background,
-    marginVertical: spacing.sm,
   },
 });
