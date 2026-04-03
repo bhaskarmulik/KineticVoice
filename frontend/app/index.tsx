@@ -1,5 +1,5 @@
 import { Redirect } from 'expo-router';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { useEffect, useState } from 'react';
 import { storage } from '../src/utils/storage';
 import { colors } from '../src/utils/theme';
@@ -11,7 +11,7 @@ export default function Index() {
   useEffect(() => {
     async function checkOnboarding() {
       try {
-        const stored = await AsyncStorage.getItem('app_settings');
+        const stored = await storage.getItem('app_settings');
         if (stored) {
           const settings = JSON.parse(stored);
           setOnboardingComplete(settings.onboardingComplete || false);
