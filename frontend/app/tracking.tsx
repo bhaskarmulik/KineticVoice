@@ -18,7 +18,7 @@ import { VoiceConfirmationModal } from '../src/components/VoiceConfirmationModal
 import { useActivityStore } from '../src/stores/activityStore';
 import { locationService } from '../src/services/locationService';
 import { voiceService } from '../src/services/voiceService';
-import { databaseService } from '../src/services/databaseService';
+import { activityRepository } from '../src/services/activityRepository';
 import { formatDuration, formatDistance, formatPace } from '../src/utils/formatting';
 import { ActivityType } from '../src/types';
 
@@ -130,7 +130,7 @@ export default function TrackingScreen() {
             
             // Save to database
             if (currentActivity) {
-              await databaseService.saveActivity({
+              await activityRepository.saveActivity({
                 ...currentActivity,
                 status: 'completed',
                 endTime: Date.now(),

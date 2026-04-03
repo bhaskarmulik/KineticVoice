@@ -15,7 +15,7 @@ import { Button } from '../../src/components/Button';
 import { MetricCard } from '../../src/components/MetricCard';
 import { ActivityCard } from '../../src/components/ActivityCard';
 import { useActivityStore } from '../../src/stores/activityStore';
-import { databaseService } from '../../src/services/databaseService';
+import { activityRepository } from '../../src/services/activityRepository';
 import { formatDistance, formatDuration } from '../../src/utils/formatting';
 import { locationService } from '../../src/services/locationService';
 
@@ -30,7 +30,7 @@ export default function HomeScreen() {
   }, []);
 
   const loadPastActivities = async () => {
-    const stored = await databaseService.getActivities();
+    const stored = await activityRepository.getActivities();
     loadActivities(stored);
   };
 
