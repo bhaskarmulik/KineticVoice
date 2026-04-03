@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, Modal, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import React from 'react';
+import { View, Text, Modal, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, borderRadius, typography } from '../utils/theme';
 import { Button } from './Button';
@@ -31,7 +31,7 @@ export function VoiceConfirmationModal({
           </View>
 
           <View style={styles.content}>
-            <Text style={styles.commandText}>"{command}"</Text>
+            <Text style={styles.commandText}>{'"'}{command}{'"'}</Text>
             <View style={styles.statusContainer}>
               <View style={styles.dotContainer}>
                 <View style={styles.dot} />
@@ -61,8 +61,6 @@ export function VoiceConfirmationModal({
     </Modal>
   );
 }
-
-const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   overlay: {

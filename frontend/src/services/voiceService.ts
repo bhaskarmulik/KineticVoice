@@ -1,5 +1,4 @@
 import { Audio } from 'expo-av';
-import * as FileSystem from 'expo-file-system';
 import { VoiceCommand } from '../types';
 
 // Groq API configuration
@@ -57,11 +56,6 @@ class VoiceService {
     try {
       const key = apiKey || this.groqApiKey;
       
-      // Read audio file
-      const audioData = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-
       // Create FormData for Groq API
       const formData = new FormData();
       formData.append('file', {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,14 +13,14 @@ export default function HistoryScreen() {
   const { activities, loadActivities } = useActivityStore();
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    loadPastActivities();
-  }, []);
-
-  const loadPastActivities = async () => {
+  const loadPastActivities = useCallback(async () => {
     const stored = await activityRepository.getActivities();
     loadActivities(stored);
-  };
+  }, [loadActivities]);
+
+  useEffect(() => {
+    loadPastActivities();
+  }, [loadPastActivities]);
 
   const filteredActivities = activities.filter(
     (activity) =>

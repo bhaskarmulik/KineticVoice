@@ -1,15 +1,6 @@
 // Storage wrapper that handles AsyncStorage errors and provides fallbacks
 import { Platform } from 'react-native';
-
-// Only import AsyncStorage for native platforms
-let AsyncStorage: any = null;
-if (Platform.OS !== 'web') {
-  try {
-    AsyncStorage = require('@react-native-async-storage/async-storage').default;
-  } catch (error) {
-    console.warn('AsyncStorage not available:', error);
-  }
-}
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 class StorageService {
   private isWeb = Platform.OS === 'web';

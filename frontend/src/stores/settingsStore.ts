@@ -50,7 +50,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
           try {
             const { firebaseService } = await import('../services/firebaseService');
             await firebaseService.initialize(settings.firebaseConfig);
-          } catch (error) {
+          } catch {
             console.log('Firebase service not available');
           }
         }
@@ -75,7 +75,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       try {
         const { firebaseService } = await import('../services/firebaseService');
         await firebaseService.initialize(config);
-      } catch (error) {
+      } catch {
         console.log('Firebase service not available');
       }
     }
