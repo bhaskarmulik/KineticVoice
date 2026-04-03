@@ -44,7 +44,7 @@ export default function OnboardingScreen() {
         await setGroqApiKey(groqKey);
       }
       await completeOnboarding();
-      router.replace('/home');
+      router.replace('/(tabs)');
     }
   };
 
